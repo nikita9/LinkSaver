@@ -67,6 +67,8 @@
       ]
     },
     "linux": {
+      "maintainer": "nikita9 <1824410+nikita9@users.noreply.github.com>",
+      "category": "Utility",
       "icon": "assets/icon.png",
       "target": [
         {

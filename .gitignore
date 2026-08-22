@@ -37,3 +37,6 @@ Thumbs.db
 
 # Legacy/local link data
 links.json
+
+# Archived pre-2.0.0 build output
+dist.old-*/
