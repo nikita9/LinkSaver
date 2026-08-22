@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Security-Policy"
+          content="default-src 'self'; script-src 'self'; style-src 'self'; img-src https: data:; connect-src 'none'; object-src 'none'">
+    <title>Link Saver</title>
+    <link rel="stylesheet" href="./src/renderer/styles.css">
+</head>
+<body>
+    <div class="drag-strip"></div>
+
+    <aside class="sidebar">
+        <div class="brand">
+            <div class="brand-mark">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+                    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+                </svg>
+            </div>
+            <span class="brand-name">Link Saver</span>
+        </div>
+
+        <nav class="nav">
+            <button class="nav-item active" data-view="library">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+                <span>Library</span>
+            </button>
+            <button class="nav-item" data-view="add">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+                <span>Add Link</span>
+            </button>
+            <button class="nav-item" data-view="bulk">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+                <span>Bulk Import</span>
+            </button>
+            <button class="nav-item" data-view="manage">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                <span>Manage</span>
+            </button>
+        </nav>
+
+        <div class="sidebar-footer">
+            <span id="sidebarCount">&nbsp;</span>
+        </div>
+    </aside>
+
+    <main class="main">
+        <!-- Library -->
+        <section class="view active" id="view-library">
+            <header class="view-header">
+                <h1>Library</h1>
+                <p class="view-sub" id="librarySub">&nbsp;</p>
+            </header>
+
+            <div class="toolbar">
+                <div class="search-box">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                    <input type="text" id="searchInput" placeholder="Search links, names, tags…" spellcheck="false">
+                </div>
+                <select id="tagFilter" class="select" title="Filter by tag">
+                    <option value="">All tags</option>
+                </select>
+                <select id="sortSelect" class="select" title="Sort order">
+                    <option value="newest">Newest first</option>
+                    <option value="oldest">Oldest first</option>
+                    <option value="name">By name</option>
+                    <option value="url">By URL</option>
+                </select>
+            </div>
+
+            <div class="selection-bar" id="selectionBar" hidden>
+                <span class="selection-count" id="selectionCount">0 selected</span>
+                <button class="btn ghost" id="selectPageBtn">Select page</button>
+                <button class="btn ghost" id="clearSelectionBtn">Clear</button>
+                <button class="btn danger" id="deleteSelectedBtn">Delete selected</button>
+            </div>
+
+            <div class="link-list" id="linkList"></div>
+
+            <div class="empty-state" id="libraryEmpty" hidden>
+                <div class="empty-art">
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                </div>
+                <h3 id="emptyTitle">No links yet</h3>
+                <p id="emptyText">Save your first link to get started.</p>
+            </div>
+
+            <button class="btn secondary load-more" id="loadMoreBtn" hidden>Load more</button>
+        </section>
+
+        <!-- Add Link -->
+        <section class="view" id="view-add">
+            <header class="view-header">
+                <h1>Add Link</h1>
+                <p class="view-sub">Untagged links get smart tag suggestions automatically.</p>
+            </header>
+
+            <div class="panel">
+                <div class="field">
+                    <label for="urlInput">URL</label>
+                    <input type="text" id="urlInput" placeholder="https://example.com — OneTab format works too" spellcheck="false">
+                </div>
+                <div class="field">
+                    <label for="nameInput">Name <span class="label-hint">optional</span></label>
+                    <input type="text" id="nameInput" placeholder="Custom name for this link">
+                </div>
+                <div class="field">
+                    <label for="tagsInput">Tags <span class="label-hint">comma-separated</span></label>
+                    <input type="text" id="tagsInput" placeholder="tag1, tag2, tag3" spellcheck="false">
+                </div>
+
+                <div class="analysis" id="analysisBox" hidden>
+                    <div class="analysis-text" id="analysisText"></div>
+                    <div class="analysis-tags" id="analysisTags"></div>
+                </div>
+
+                <div class="panel-actions">
+                    <button class="btn primary" id="saveLinkBtn">Save link</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Bulk Import -->
+        <section class="view" id="view-bulk">
+            <header class="view-header">
+                <h1>Bulk Import</h1>
+                <p class="view-sub">Paste many links at once — one per line.</p>
+            </header>
+
+            <div class="panel">
+                <div class="formats">
+                    <div class="formats-title">Supported formats</div>
+                    <div class="formats-row"><span>OneTab</span><code>https://example.com | Page Title</code></div>
+                    <div class="formats-row"><span>With tags</span><code>https://example.com | Title | tag1, tag2</code></div>
+                    <div class="formats-row"><span>CSV</span><code>https://example.com, tag1, tag2</code></div>
+                    <div class="formats-row"><span>Plain</span><code>https://example.com</code></div>
+                </div>
+
+                <div class="field">
+                    <label for="bulkInput">Links</label>
+                    <textarea id="bulkInput" placeholder="Paste your links here, one per line…" spellcheck="false"></textarea>
+                </div>
+
+                <div class="format-hint" id="formatHint" hidden></div>
+
+                <div class="panel-actions">
+                    <button class="btn primary" id="saveBulkBtn">Import all</button>
+                    <button class="btn secondary" id="clearBulkBtn">Clear</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Manage -->
+        <section class="view" id="view-manage">
+            <header class="view-header">
+                <h1>Manage</h1>
+                <p class="view-sub">Stats, maintenance, and data portability.</p>
+            </header>
+
+            <div class="stats-grid">
+                <div class="stat-tile">
+                    <span class="stat-label">Total links</span>
+                    <span class="stat-value" id="statLinks">0</span>
+                </div>
+                <div class="stat-tile">
+                    <span class="stat-label">Unique tags</span>
+                    <span class="stat-value" id="statTags">0</span>
+                </div>
+                <div class="stat-tile">
+                    <span class="stat-label">Auto tags</span>
+                    <span class="stat-value" id="statAiTags">0</span>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="manage-row">
+                    <div>
+                        <div class="manage-title">Auto-tag untagged links</div>
+                        <div class="manage-desc">Analyze every untagged link and apply suggested tags.</div>
+                    </div>
+                    <button class="btn primary" id="enhanceBtn">Run</button>
+                </div>
+                <div class="manage-row">
+                    <div>
+                        <div class="manage-title">Export</div>
+                        <div class="manage-desc">Save all links to a JSON or CSV file.</div>
+                    </div>
+                    <button class="btn secondary" id="exportBtn">Export…</button>
+                </div>
+                <div class="manage-row">
+                    <div>
+                        <div class="manage-title">Import</div>
+                        <div class="manage-desc">Load links from a JSON export. Duplicates are skipped.</div>
+                    </div>
+                    <button class="btn secondary" id="importBtn">Import…</button>
+                </div>
+                <div class="manage-row">
+                    <div>
+                        <div class="manage-title">Storage</div>
+                        <div class="manage-desc" id="storageInfo">—</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <div class="toasts" id="toasts"></div>
+
+    <script src="./src/renderer/app.js"></script>
+</body>
+</html>
