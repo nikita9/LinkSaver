@@ -99,14 +99,10 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG: ${{ github.event.inputs.tag || github.ref_name }}
         run: |
-          # Artifact names contain spaces ("Link Saver Setup 2.0.0.exe"),
-          # so collect them into an array instead of word-splitting.
-          mapfile -t FILES < <(find artifacts -type f)
-          printf 'uploading %s\n' "${FILES[@]}"
-          if gh release view "$TAG" >/dev/null 2>&1; then
-            gh release upload "$TAG" "${FILES[@]}" --clobber
-          else
-            gh release create "$TAG" "${FILES[@]}" \
-              --title "$TAG" \
-              --generate-notes
+          # Artifact names contain spaces ("Link Saver Setup 2.0.0.exe"), so
+          # pass them NUL-delimited rather than word-splitting a $(find ...).
+          find artifacts -type f -print
+          if ! gh release view "$TAG" >/dev/null 2>&1; then
+            gh release create "$TAG" --title "$TAG" --generate-notes
           fi
+          find artifacts -type f -print0 | xargs -0 gh release upload "$TAG" --clobber
