@@ -53,11 +53,20 @@ jobs:
       - name: Verify the native SQLite module was bundled
         shell: bash
         run: |
-          found=$(find dist -name 'better_sqlite3.node' | head -1)
-          if [ -z "$found" ]; then
-            echo "::warning::better_sqlite3.node not found in dist — the app will fall back to JSON storage"
+          # The .node either sits loose on disk (when asarUnpack applies) or
+          # is packed inside app.asar. Check both before warning.
+          loose=$(find dist -name 'better_sqlite3.node' | head -1)
+          packed=""
+          while IFS= read -r asar; do
+            if grep -q 'better_sqlite3.node' "$asar" 2>/dev/null; then packed="$asar"; break; fi
+          done < <(find dist -name 'app.asar')
+
+          if [ -n "$loose" ]; then
+            echo "native module (unpacked): $loose"
+          elif [ -n "$packed" ]; then
+            echo "native module (inside asar): $packed"
           else
-            echo "bundled native module: $found"
+            echo "::warning::better-sqlite3 not bundled — the app will fall back to JSON storage"
           fi
 
       - uses: actions/upload-artifact@v4
@@ -90,10 +99,14 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG: ${{ github.event.inputs.tag || github.ref_name }}
         run: |
+          # Artifact names contain spaces ("Link Saver Setup 2.0.0.exe"),
+          # so collect them into an array instead of word-splitting.
+          mapfile -t FILES < <(find artifacts -type f)
+          printf 'uploading %s\n' "${FILES[@]}"
           if gh release view "$TAG" >/dev/null 2>&1; then
-            gh release upload "$TAG" $(find artifacts -type f) --clobber
+            gh release upload "$TAG" "${FILES[@]}" --clobber
           else
-            gh release create "$TAG" $(find artifacts -type f) \
+            gh release create "$TAG" "${FILES[@]}" \
               --title "$TAG" \
               --generate-notes
           fi
