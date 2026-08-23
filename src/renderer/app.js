@@ -85,6 +85,8 @@ const state = {
     view: 'library'
 };
 
+let libraryRequest = 0;
+
 // ── Navigation ──
 
 function switchView(name) {
@@ -106,18 +108,23 @@ function switchView(name) {
 // ── Library: loading & rendering ──
 
 async function loadLibrary(reset) {
-    if (state.loading) return;
-    state.loading = true;
+    if (state.loading && !reset) return;
     if (reset) state.page = 1;
+    state.loading = true;
+    $('#loadMoreBtn').disabled = true;
+
+    const requestId = ++libraryRequest;
+    const query = {
+        page: state.page,
+        limit: state.limit,
+        search: state.search,
+        tag: state.tag,
+        sort: state.sort
+    };
 
     try {
-        const result = await window.api.getPage({
-            page: state.page,
-            limit: state.limit,
-            search: state.search,
-            tag: state.tag,
-            sort: state.sort
-        });
+        const result = await window.api.getPage(query);
+        if (requestId !== libraryRequest) return;
         if (!result.ok) {
             toast('error', result.error || 'Failed to load links');
             return;
@@ -134,7 +141,7 @@ async function loadLibrary(reset) {
         const loadMore = $('#loadMoreBtn');
         loadMore.hidden = !result.hasMore;
         if (result.hasMore) {
-            const shown = state.page * state.limit;
+            const shown = query.page * query.limit;
             loadMore.textContent = `Load more (${result.totalCount - shown} remaining)`;
         }
 
@@ -148,9 +155,12 @@ async function loadLibrary(reset) {
                 : 'Save your first link from the Add Link tab.';
         }
     } catch (error) {
-        toast('error', `Error: ${error.message}`);
+        if (requestId === libraryRequest) toast('error', `Error: ${error.message}`);
     } finally {
-        state.loading = false;
+        if (requestId === libraryRequest) {
+            state.loading = false;
+            $('#loadMoreBtn').disabled = false;
+        }
     }
 }
 
@@ -219,7 +229,12 @@ function setupLibrary() {
 
         switch (actionBtn.dataset.action) {
             case 'open':
-                window.api.openExternal(url);
+                try {
+                    const result = await window.api.openExternal(url);
+                    if (!result.ok) toast('error', result.error || 'Could not open link');
+                } catch (error) {
+                    toast('error', `Could not open link: ${error.message}`);
+                }
                 break;
             case 'copy':
                 try {
@@ -314,14 +329,18 @@ async function deleteLinks(ids) {
     const word = ids.length === 1 ? 'link' : `${ids.length} links`;
     if (!confirm(`Delete ${word}? This cannot be undone.`)) return;
 
-    const result = await window.api.deleteLinks(ids);
-    if (result.ok) {
-        toast('success', `Deleted ${pluralize(result.deleted, 'link')}`);
-        clearSelection();
-        loadLibrary(true);
-        refreshTags();
-    } else {
-        toast('error', result.error || 'Delete failed');
+    try {
+        const result = await window.api.deleteLinks(ids);
+        if (result.ok) {
+            toast('success', `Deleted ${pluralize(result.deleted, 'link')}`);
+            clearSelection();
+            loadLibrary(true);
+            refreshTags();
+        } else {
+            toast('error', result.error || 'Delete failed');
+        }
+    } catch (error) {
+        toast('error', `Delete failed: ${error.message}`);
     }
 }
 

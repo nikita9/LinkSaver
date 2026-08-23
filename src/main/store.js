@@ -8,8 +8,28 @@ const PAGE_SORTS = {
     name: "ORDER BY COALESCE(NULLIF(name, ''), url) COLLATE NOCASE ASC"
 };
 
+const DEFAULT_PAGE_SIZE = 50;
+const MAX_PAGE_SIZE = 100;
+const MAX_SEARCH_LENGTH = 500;
+const MAX_TAG_LENGTH = 64;
+
 /** Normalize the query options both backends accept, filling in defaults. */
-function pageOptions({ page = 1, limit = 50, search = '', tag = '', sort = 'newest' } = {}) {
+export function pageOptions(options = {}) {
+    const input = options && typeof options === 'object' ? options : {};
+    const page = Number.isSafeInteger(input.page) && input.page > 0 ? input.page : 1;
+    const limit = Number.isSafeInteger(input.limit)
+        ? Math.min(MAX_PAGE_SIZE, Math.max(1, input.limit))
+        : DEFAULT_PAGE_SIZE;
+    const search = typeof input.search === 'string'
+        ? input.search.trim().slice(0, MAX_SEARCH_LENGTH)
+        : '';
+    const tag = typeof input.tag === 'string'
+        ? input.tag.trim().slice(0, MAX_TAG_LENGTH)
+        : '';
+    const sort = typeof input.sort === 'string' && Object.hasOwn(PAGE_SORTS, input.sort)
+        ? input.sort
+        : 'newest';
+
     return { page, limit, search, tag, sort };
 }
 
@@ -41,7 +61,7 @@ function rowToLink(row) {
  * SQLite-backed store. All methods are synchronous (better-sqlite3),
  * but callers treat them as async so both backends share one interface.
  */
-class SqliteStore {
+export class SqliteStore {
     backend = 'sqlite';
 
     constructor(db, dbPath) {
@@ -190,7 +210,7 @@ class SqliteStore {
  * JSON-file store used only when the native SQLite module cannot load.
  * Keeps everything in memory and persists atomically after each mutation.
  */
-class JsonStore {
+export class JsonStore {
     backend = 'json';
 
     constructor(filePath) {
@@ -203,16 +223,37 @@ class JsonStore {
     async init() {
         try {
             const raw = await fs.readFile(this.location, 'utf8');
-            this.links = JSON.parse(raw);
+            const parsed = JSON.parse(raw);
+            if (!Array.isArray(parsed)) throw new Error('JSON store must contain an array');
+            this.links = parsed;
         } catch (error) {
             if (error.code !== 'ENOENT') throw error;
             this.links = [];
         }
+
+        const validLinks = [];
+        const usedIds = new Set();
         for (const link of this.links) {
-            if (typeof link.id !== 'number') link.id = this.nextId;
+            if (!link || typeof link !== 'object' || typeof link.url !== 'string' || this.urls.has(link.url)) {
+                continue;
+            }
+            if (!Number.isSafeInteger(link.id) || link.id < 1 || usedIds.has(link.id)) {
+                while (usedIds.has(this.nextId)) this.nextId++;
+                link.id = this.nextId;
+            }
+            link.name = typeof link.name === 'string' ? link.name : null;
+            link.tags = Array.isArray(link.tags) ? link.tags.filter((tag) => typeof tag === 'string') : [];
+            link.aiGenerated = Array.isArray(link.aiGenerated)
+                ? link.aiGenerated.filter((tag) => typeof tag === 'string')
+                : [];
+            link.added = typeof link.added === 'string' ? link.added : new Date().toISOString();
+
+            usedIds.add(link.id);
+            validLinks.push(link);
             this.nextId = Math.max(this.nextId, Math.floor(link.id) + 1);
             this.urls.add(link.url);
         }
+        this.links = validLinks;
     }
 
     async persist() {
@@ -328,7 +369,7 @@ async function migrateLegacyJson(store, jsonPath) {
     try {
         const links = JSON.parse(raw);
         if (!Array.isArray(links) || links.length === 0) return;
-        const { inserted } = store.addMany(links.filter((link) => link && link.url));
+        const { inserted } = await store.addMany(links.filter((link) => link && link.url));
         await fs.copyFile(jsonPath, `${jsonPath}.backup`);
         console.log(`Migrated ${inserted} links from links.json (backup written)`);
     } catch (error) {
@@ -340,16 +381,18 @@ export async function createStore(userDataDir) {
     const dbPath = path.join(userDataDir, 'links.db');
     const jsonPath = path.join(userDataDir, 'links.json');
 
+    let Database;
     try {
-        const { default: Database } = await import('better-sqlite3');
-        const store = new SqliteStore(new Database(dbPath), dbPath);
-        store.init();
-        await migrateLegacyJson(store, jsonPath);
-        return store;
+        ({ default: Database } = await import('better-sqlite3'));
     } catch (error) {
         console.error('SQLite unavailable, falling back to JSON store:', error.message);
         const store = new JsonStore(jsonPath);
         await store.init();
         return store;
     }
+
+    const store = new SqliteStore(new Database(dbPath), dbPath);
+    store.init();
+    await migrateLegacyJson(store, jsonPath);
+    return store;
 }

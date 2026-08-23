@@ -7,16 +7,21 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: 'Tag to build and release (e.g. v2.0.0)'
+        description: 'Existing tag to build (for example, v2.1.0)'
         required: true
 
 permissions:
-  contents: write
+  contents: read
+
+concurrency:
+  group: release-${{ github.event.inputs.tag || github.ref_name }}
+  cancel-in-progress: false
 
 jobs:
   build:
     name: Build ${{ matrix.platform }}
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
@@ -35,39 +40,31 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: npm
 
-      # Rebuilds better-sqlite3 against Electron's ABI for this runner's
-      # platform. This is why each target builds on its own native runner.
+      - name: Validate release version
+        shell: bash
+        env:
+          TAG: ${{ github.event.inputs.tag || github.ref_name }}
+        run: |
+          VERSION="$(node -p "require('./package.json').version")"
+          test "$TAG" = "v$VERSION"
+
       - name: Install dependencies
         run: npm ci
 
+      - name: Verify source
+        run: npm run check
+
       - name: Build ${{ matrix.platform }}
-        run: npx electron-builder --${{ matrix.platform }} --publish never
+        run: npm run build:${{ matrix.platform }}
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # No Apple Developer cert in CI: produce unsigned builds rather than failing.
           CSC_IDENTITY_AUTO_DISCOVERY: false
 
-      - name: Verify the native SQLite module was bundled
+      - name: Verify bundled native SQLite module
         shell: bash
-        run: |
-          # The .node either sits loose on disk (when asarUnpack applies) or
-          # is packed inside app.asar. Check both before warning.
-          loose=$(find dist -name 'better_sqlite3.node' | head -1)
-          packed=""
-          while IFS= read -r asar; do
-            if grep -q 'better_sqlite3.node' "$asar" 2>/dev/null; then packed="$asar"; break; fi
-          done < <(find dist -name 'app.asar')
-
-          if [ -n "$loose" ]; then
-            echo "native module (unpacked): $loose"
-          elif [ -n "$packed" ]; then
-            echo "native module (inside asar): $packed"
-          else
-            echo "::warning::better-sqlite3 not bundled — the app will fall back to JSON storage"
-          fi
+        run: test -n "$(find dist -path '*better-sqlite3*' -name '*.node' -print -quit)"
 
       - uses: actions/upload-artifact@v4
         with:
@@ -78,31 +75,37 @@ jobs:
             dist/*.AppImage
             dist/*.deb
           if-no-files-found: error
-          retention-days: 7
+          retention-days: 14
 
   release:
-    name: Publish release
+    name: Publish GitHub release
     needs: build
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
     steps:
-      - uses: actions/checkout@v4
-
       - uses: actions/download-artifact@v4
         with:
           path: artifacts
 
-      - name: List collected artifacts
-        run: find artifacts -type f -printf '%10s  %p\n' | sort -k2
+      - name: Prepare release assets and checksums
+        run: |
+          mkdir release-assets
+          find artifacts -type f -exec cp '{}' release-assets/ \;
+          cd release-assets
+          find . -maxdepth 1 -type f -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS
 
-      - name: Create or update the release
+      - name: Create or update release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG: ${{ github.event.inputs.tag || github.ref_name }}
         run: |
-          # Artifact names contain spaces ("Link Saver Setup 2.0.0.exe"), so
-          # pass them NUL-delimited rather than word-splitting a $(find ...).
-          find artifacts -type f -print
-          if ! gh release view "$TAG" >/dev/null 2>&1; then
-            gh release create "$TAG" --title "$TAG" --generate-notes
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" release-assets/* --clobber
+          else
+            gh release create "$TAG" release-assets/* \
+              --title "$TAG" \
+              --generate-notes \
+              --verify-tag
           fi
-          find artifacts -type f -print0 | xargs -0 gh release upload "$TAG" --clobber

@@ -2,6 +2,8 @@
 
 A fast, minimal desktop app for saving, organizing, and managing bookmarks — with smart tag suggestions based on domain, TLD, and URL-path analysis. Built with Electron.
 
+[Download the latest release](https://github.com/nikita9/LinkSaver/releases/latest)
+
 ## Features
 
 - **Library view** — search, tag filter, and sorting over your full collection, with paginated loading
@@ -15,11 +17,12 @@ A fast, minimal desktop app for saving, organizing, and managing bookmarks — w
 
 ```
 main.js                 Electron entry: window + app lifecycle
-preload.js              contextBridge API (sandboxed, IPC only)
+preload.cjs             contextBridge API (sandboxed, IPC only)
 index.html              App shell
 src/
   main/
     store.js            Storage layer: SqliteStore + JsonStore behind one interface
+    link-service.js     Input normalization, validation, and batch preparation
     tagger.js           Heuristic URL analyzer / tag suggester
     ipc.js              IPC handlers, input validation, import/export
   renderer/
@@ -33,20 +36,30 @@ The app makes no network requests of its own — your saved links are never sent
 
 ## Development
 
+Requires Node.js 22.13 or a newer supported even-numbered release.
+
 ```bash
-npm install
+npm ci
+npm run check
 npm start
 ```
 
 ## Building
 
 ```bash
-npm run build        # current platform
-npm run build-win    # Windows
-npm run dist         # all configured targets, no publish
+npm run pack          # unpacked app for the current platform
+npm run build         # installers for the current platform
+npm run build:mac     # macOS DMG (x64 and arm64)
+npm run build:win     # Windows installer and portable app (x64)
+npm run build:linux   # Linux AppImage and Debian package (x64)
+npm run clean         # remove generated dist/ output
 ```
 
 Installers are written to `dist/`.
+
+## Releases
+
+CI runs linting, unit tests, a production dependency audit, and a packaging smoke test for every pull request and push to `main`. Tags matching the package version (for example, `v2.1.0`) build on native macOS, Windows, and Linux runners. The release workflow publishes the installers and a `SHA256SUMS` file to GitHub Releases.
 
 ## Data location
 

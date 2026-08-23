@@ -1,17 +1,23 @@
 {
   "name": "linkssaver",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "Link saver with smart auto-tagging",
   "main": "main.js",
   "type": "module",
+  "private": true,
   "scripts": {
     "start": "electron .",
     "dev": "electron . --dev",
-    "build": "electron-builder",
-    "build-win": "electron-builder --win",
-    "dist": "electron-builder --publish=never",
+    "lint": "eslint .",
+    "test": "node --test",
+    "check": "npm run lint && npm test",
+    "pack": "electron-builder --dir --publish=never",
+    "build": "electron-builder --publish=never",
+    "build:mac": "electron-builder --mac --publish=never",
+    "build:win": "electron-builder --win --publish=never",
+    "build:linux": "electron-builder --linux --publish=never",
     "postinstall": "electron-builder install-app-deps",
-    "clean": "rm -rf dist"
+    "clean": "node scripts/clean.mjs"
   },
   "keywords": [
     "electron",
@@ -20,24 +26,41 @@
     "productivity",
     "ai"
   ],
-  "author": "Link Saver",
+  "author": "nikita9",
   "license": "MIT",
+  "homepage": "https://github.com/nikita9/LinkSaver#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nikita9/LinkSaver.git"
+  },
+  "bugs": {
+    "url": "https://github.com/nikita9/LinkSaver/issues"
+  },
+  "engines": {
+    "node": "^22.13.0 || >=24",
+    "npm": ">=10"
+  },
   "dependencies": {
-    "better-sqlite3": "^11.10.0"
+    "better-sqlite3": "^13.0.3"
   },
   "devDependencies": {
-    "electron": "^28.1.0",
-    "electron-builder": "^24.6.4"
+    "electron": "^43.4.1",
+    "electron-builder": "^26.15.3",
+    "eslint": "^10.9.0"
   },
   "build": {
     "appId": "com.linksaver.app",
     "productName": "Link Saver",
+    "asar": true,
+    "asarUnpack": [
+      "**/*.node"
+    ],
     "directories": {
       "output": "dist"
     },
     "files": [
       "main.js",
-      "preload.js",
+      "preload.cjs",
       "index.html",
       "src/**/*",
       "assets/**/*",
@@ -49,7 +72,10 @@
       "target": [
         {
           "target": "dmg",
-          "arch": ["x64", "arm64"]
+          "arch": [
+            "x64",
+            "arm64"
+          ]
         }
       ]
     },
@@ -58,28 +84,52 @@
       "target": [
         {
           "target": "nsis",
-          "arch": ["x64", "ia32"]
+          "arch": [
+            "x64"
+          ]
         },
         {
           "target": "portable",
-          "arch": ["x64"]
+          "arch": [
+            "x64"
+          ]
         }
       ]
     },
     "linux": {
       "maintainer": "nikita9 <1824410+nikita9@users.noreply.github.com>",
       "category": "Utility",
+      "executableName": "link-saver",
       "icon": "assets/icon.png",
       "target": [
         {
           "target": "AppImage",
-          "arch": ["x64"]
+          "arch": [
+            "x64"
+          ]
         },
         {
           "target": "deb",
-          "arch": ["x64"]
+          "arch": [
+            "x64"
+          ]
         }
       ]
+    },
+    "dmg": {
+      "artifactName": "${productName}-${version}-mac-${arch}.${ext}"
+    },
+    "nsis": {
+      "artifactName": "${productName}-Setup-${version}-${arch}.${ext}"
+    },
+    "portable": {
+      "artifactName": "${productName}-Portable-${version}-${arch}.${ext}"
+    },
+    "appImage": {
+      "artifactName": "${productName}-${version}-linux-${arch}.${ext}"
+    },
+    "deb": {
+      "artifactName": "${productName}-${version}-linux-${arch}.${ext}"
     }
   }
 }

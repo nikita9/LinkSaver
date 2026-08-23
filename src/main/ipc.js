@@ -1,78 +1,11 @@
 import { ipcMain, dialog, shell } from 'electron';
 import { promises as fs } from 'node:fs';
 import { analyzeUrl } from './tagger.js';
+import { MAX_BATCH_SIZE, normalizeUrl, prepareBatch, prepareLink } from './link-service.js';
 
-const MAX_TAG_LENGTH = 64;
-const MAX_TAGS_PER_LINK = 20;
-
-/** Strip trailing OneTab/CSV noise, require http(s), and validate. Returns null if invalid. */
-export function normalizeUrl(raw) {
-    if (typeof raw !== 'string') return null;
-    const cleaned = raw.includes(' | ')
-        ? raw.split(' | ')[0].trim()
-        : raw.split(',')[0].trim();
-    try {
-        const parsed = new URL(cleaned);
-        if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return null;
-        return cleaned;
-    } catch {
-        return null;
-    }
-}
-
-function sanitizeTags(tags) {
-    if (!Array.isArray(tags)) return [];
-    return [...new Set(
-        tags
-            .filter((tag) => typeof tag === 'string')
-            .map((tag) => tag.trim().slice(0, MAX_TAG_LENGTH))
-            .filter(Boolean)
-    )].slice(0, MAX_TAGS_PER_LINK);
-}
-
-/** Build a sanitized link record from untrusted renderer input; AI-tags it if untagged. */
-function prepareLink(input) {
-    const url = normalizeUrl(input.url);
-    if (!url) return null;
-
-    const link = {
-        url,
-        name: typeof input.name === 'string' ? input.name.trim().slice(0, 500) || null : null,
-        tags: sanitizeTags(input.tags),
-        aiGenerated: [],
-        added: typeof input.added === 'string' ? input.added : undefined
-    };
-
-    if (link.tags.length === 0) {
-        const analysis = analyzeUrl(url);
-        if (analysis.ok && analysis.tags.length > 0) {
-            link.tags = analysis.tags;
-            link.aiGenerated = analysis.tags;
-        }
-    }
-    return link;
-}
-
-/**
- * Sanitize a batch of untrusted link inputs: drops invalid URLs, collapses
- * duplicates within the batch, and reports how many were rejected.
- */
-function prepareBatch(inputs) {
-    const seen = new Set();
-    const links = [];
-    let invalid = 0;
-    let aiEnhanced = 0;
-
-    for (const input of inputs) {
-        const link = prepareLink(input || {});
-        if (!link) { invalid++; continue; }
-        if (seen.has(link.url)) continue;
-        seen.add(link.url);
-        if (link.aiGenerated.length > 0) aiEnhanced++;
-        links.push(link);
-    }
-    return { links, invalid, aiEnhanced };
-}
+const MAX_DELETE_IDS = 10_000;
+const MAX_IMPORT_BYTES = 10 * 1024 * 1024;
+const RENDERER_URL = new URL('../../index.html', import.meta.url).href;
 
 /** Persist a prepared batch, skipping the store round-trip when there is nothing to write. */
 async function saveBatch(store, links) {
@@ -86,11 +19,15 @@ function csvField(value) {
 
 function handle(channel, fn) {
     ipcMain.handle(channel, async (event, ...args) => {
+        if (event.senderFrame?.url !== RENDERER_URL) {
+            console.warn(`Blocked IPC ${channel} from an untrusted sender`);
+            return { ok: false, error: 'Unauthorized IPC sender' };
+        }
         try {
             return await fn(...args);
         } catch (error) {
             console.error(`IPC ${channel} failed:`, error);
-            return { ok: false, error: error.message };
+            return { ok: false, error: error instanceof Error ? error.message : 'Unexpected error' };
         }
     });
 }
@@ -107,11 +44,20 @@ export function registerIpc(store) {
 
     handle('links:add-bulk', async (inputs) => {
         if (!Array.isArray(inputs)) return { ok: false, error: 'Expected an array of links' };
+        if (inputs.length > MAX_BATCH_SIZE) {
+            return { ok: false, error: `Import is limited to ${MAX_BATCH_SIZE} links at a time` };
+        }
 
-        const { links, invalid, aiEnhanced } = prepareBatch(inputs);
-        const { inserted, duplicates } = await saveBatch(store, links);
+        const batch = prepareBatch(inputs);
+        const saved = await saveBatch(store, batch.links);
 
-        return { ok: true, added: inserted, duplicates, invalid, aiEnhanced };
+        return {
+            ok: true,
+            added: saved.inserted,
+            duplicates: batch.duplicates + saved.duplicates,
+            invalid: batch.invalid,
+            aiEnhanced: batch.aiEnhanced
+        };
     });
 
     handle('links:page', async (options) => {
@@ -121,7 +67,10 @@ export function registerIpc(store) {
 
     handle('links:delete', async (ids) => {
         if (!Array.isArray(ids) || ids.length === 0) return { ok: true, deleted: 0 };
-        const deleted = await store.remove(ids.filter((id) => Number.isFinite(id)));
+        const safeIds = [...new Set(ids)]
+            .filter((id) => Number.isSafeInteger(id) && id > 0)
+            .slice(0, MAX_DELETE_IDS);
+        const deleted = await store.remove(safeIds);
         return { ok: true, deleted };
     });
 
@@ -162,9 +111,9 @@ export function registerIpc(store) {
                 csvField((link.tags || []).join(';')),
                 csvField(link.added)
             ].join(','));
-            await fs.writeFile(filePath, ['URL,Name,Tags,Date Added', ...rows].join('\n'));
+            await fs.writeFile(filePath, ['URL,Name,Tags,Date Added', ...rows].join('\n'), 'utf8');
         } else {
-            await fs.writeFile(filePath, JSON.stringify(links, null, 2));
+            await fs.writeFile(filePath, JSON.stringify(links, null, 2), 'utf8');
         }
         return { ok: true, count: links.length, path: filePath };
     });
@@ -177,15 +126,29 @@ export function registerIpc(store) {
         });
         if (!filePaths || filePaths.length === 0) return { ok: false, cancelled: true };
 
+        const { size } = await fs.stat(filePaths[0]);
+        if (size > MAX_IMPORT_BYTES) {
+            return { ok: false, error: 'Import file is larger than 10 MB' };
+        }
+
         const parsed = JSON.parse(await fs.readFile(filePaths[0], 'utf8'));
         if (!Array.isArray(parsed)) {
             return { ok: false, error: 'Invalid file — expected a JSON array of links' };
         }
+        if (parsed.length > MAX_BATCH_SIZE) {
+            return { ok: false, error: `Import is limited to ${MAX_BATCH_SIZE} links at a time` };
+        }
 
-        const { links, invalid } = prepareBatch(parsed);
-        const { inserted, duplicates } = await saveBatch(store, links);
+        const batch = prepareBatch(parsed);
+        const saved = await saveBatch(store, batch.links);
 
-        return { ok: true, imported: inserted, duplicates, invalid };
+        return {
+            ok: true,
+            imported: saved.inserted,
+            duplicates: batch.duplicates + saved.duplicates,
+            invalid: batch.invalid,
+            aiEnhanced: batch.aiEnhanced
+        };
     });
 
     handle('url:analyze', async (url) => {
