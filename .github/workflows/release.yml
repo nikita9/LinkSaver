@@ -30,7 +30,9 @@ jobs:
             platform: mac
           - os: ubuntu-latest
             platform: linux
-          - os: windows-latest
+          # Pin Visual Studio 2022 until node-gyp supports the VS 2026 image
+          # currently selected by windows-latest.
+          - os: windows-2022
             platform: win
 
     steps:
