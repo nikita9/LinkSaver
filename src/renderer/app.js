@@ -173,7 +173,7 @@ function cardHtml(link) {
     return `
     <article class="card${selected ? ' selected' : ''}" data-id="${link.id}" data-url="${escapeHtml(link.url)}">
         <label class="card-check"><input type="checkbox"${selected ? ' checked' : ''}></label>
-        <div class="favicon"><span>${escapeHtml(domain.charAt(0).toUpperCase() || '?')}</span><img src="https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=64" alt="" loading="lazy"></div>
+        <div class="favicon" aria-hidden="true">${escapeHtml(domain.charAt(0).toUpperCase() || '?')}</div>
         <div class="card-body">
             <div class="card-title" data-action="open" title="${escapeHtml(link.url)}">${escapeHtml(title)}</div>
             <div class="card-meta">${escapeHtml(domain)} · ${formatDate(link.added)}</div>
@@ -201,11 +201,6 @@ function renderCards(links, reset) {
 
 function setupLibrary() {
     const list = $('#linkList');
-
-    // Broken favicons: fall back to the letter tile behind the image
-    list.addEventListener('error', (e) => {
-        if (e.target.tagName === 'IMG') e.target.remove();
-    }, true);
 
     list.addEventListener('click', async (e) => {
         const chip = e.target.closest('.chip[data-tag]');

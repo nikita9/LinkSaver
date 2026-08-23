@@ -4,7 +4,7 @@ A fast, minimal desktop app for saving, organizing, and managing bookmarks — w
 
 ## Features
 
-- **Library view** — search, tag filter, and sorting over your full collection, with paginated loading and website favicons
+- **Library view** — search, tag filter, and sorting over your full collection, with paginated loading
 - **Smart tagging** — untagged links automatically get suggested tags on save; a one-click pass can auto-tag your whole backlog
 - **Bulk import** — paste OneTab exports, `URL, tags` CSV lines, or plain URL lists; the format is detected automatically
 - **Multi-select delete** — select links directly in the library and delete them in one batch
@@ -28,6 +28,8 @@ src/
 ```
 
 Security: sandboxed renderer with context isolation, strict CSP, IPC-validated `openExternal` (http/https only), and all renderer input sanitized in the main process.
+
+The app makes no network requests of its own — your saved links are never sent anywhere. Browsing the library is entirely offline; URLs leave the app only when you explicitly open one.
 
 ## Development
 
