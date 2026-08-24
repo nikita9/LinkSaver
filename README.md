@@ -9,7 +9,15 @@ A fast, minimal desktop app for saving, organizing, and managing bookmarks — w
 [Download the latest release](https://github.com/nikita9/LinkSaver/releases/latest)
 
 > [!WARNING]
-> The v2.1.0 macOS and Windows packages were published before trusted code-signing was enforced. macOS may report the app as damaged, and Windows may show an unknown-publisher warning. Do not bypass operating-system security checks. Build from source or wait for the next signed release.
+> The v2.1.0 macOS and Windows packages were published before trusted code-signing was enforced. Verify `SHA256SUMS` before opening them, and use only the documented per-app operating-system exception. Never disable Gatekeeper or SmartScreen globally.
+
+## Install Link Saver
+
+1. Open the [latest release](https://github.com/nikita9/LinkSaver/releases/latest).
+2. Download the package for your operating system and `SHA256SUMS`.
+3. Verify the checksum, then follow the platform-specific installation steps.
+
+See the **[complete installation guide](docs/INSTALLATION.md)** for download selection, checksum commands, macOS **Open Anyway**, Windows SmartScreen, Linux installation, and building locally from source.
 
 ## Features
 

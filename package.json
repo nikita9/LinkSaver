@@ -119,19 +119,19 @@
       ]
     },
     "dmg": {
-      "artifactName": "${productName}-${version}-mac-${arch}.${ext}"
+      "artifactName": "Link.Saver-${version}-mac-${arch}.${ext}"
     },
     "nsis": {
-      "artifactName": "${productName}-Setup-${version}-${arch}.${ext}"
+      "artifactName": "Link.Saver-Setup-${version}-${arch}.${ext}"
     },
     "portable": {
-      "artifactName": "${productName}-Portable-${version}-${arch}.${ext}"
+      "artifactName": "Link.Saver-Portable-${version}-${arch}.${ext}"
     },
     "appImage": {
-      "artifactName": "${productName}-${version}-linux-${arch}.${ext}"
+      "artifactName": "Link.Saver-${version}-linux-${arch}.${ext}"
     },
     "deb": {
-      "artifactName": "${productName}-${version}-linux-${arch}.${ext}"
+      "artifactName": "Link.Saver-${version}-linux-${arch}.${ext}"
     }
   }
 }
