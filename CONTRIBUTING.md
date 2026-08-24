@@ -12,6 +12,7 @@ Thanks for improving Link Saver. Keep changes focused, preserve the offline-firs
 ## Development setup
 
 Use Node.js 22.13 or a newer supported even-numbered release.
+The repository includes `.editorconfig` defaults for consistent line endings and indentation.
 
 ```bash
 npm ci
@@ -26,6 +27,8 @@ npm run check
 npm run pack
 npm run clean
 ```
+
+To refresh the README screenshots after a user-interface change, run `npm run screenshots` on a graphical desktop. The command uses an isolated temporary database with deterministic demo links, writes the three PNG files under `docs/images/`, and removes its temporary data when finished.
 
 Do not commit `node_modules/`, `dist/`, local bookmark data, credentials, certificates, or signing keys.
 

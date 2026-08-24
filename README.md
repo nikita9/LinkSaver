@@ -11,6 +11,21 @@ A fast, minimal desktop app for saving, organizing, and managing bookmarks — w
 > [!WARNING]
 > The v2.1.0 macOS and Windows packages were published before trusted code-signing was enforced. Verify `SHA256SUMS` before opening them, and use only the documented per-app operating-system exception. Never disable Gatekeeper or SmartScreen globally.
 
+## Screenshots
+
+![Link Saver library showing saved links and automatically suggested tags](docs/images/link-saver-library.png)
+
+<table>
+  <tr>
+    <th>Smart tag suggestions</th>
+    <th>Stats and data portability</th>
+  </tr>
+  <tr>
+    <td><img src="docs/images/link-saver-smart-tags.png" alt="Link Saver suggesting tags for a GitHub documentation URL"></td>
+    <td><img src="docs/images/link-saver-manage.png" alt="Link Saver management screen with link and tag statistics"></td>
+  </tr>
+</table>
+
 ## Install Link Saver
 
 1. Open the [latest release](https://github.com/nikita9/LinkSaver/releases/latest).

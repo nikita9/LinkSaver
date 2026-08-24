@@ -9,12 +9,19 @@ All notable changes to Link Saver are documented here.
 - Public contribution, conduct, issue-reporting, pull-request, and release-maintainer documentation.
 - Public GitHub Wiki covering installation, source builds, troubleshooting, privacy, and contribution guidance.
 - User installation instructions for release selection, checksum verification, operating-system warnings, and local source builds.
+- Cross-platform CI packaging checks and shared EditorConfig contributor defaults.
+- Application screenshots and a reproducible, isolated screenshot capture command.
 - Fail-closed macOS notarization and Windows Authenticode requirements with post-build signature verification.
+
+### Changed
+
+- Sized the initial application window to the available desktop work area on compact displays.
 
 ### Security
 
 - Neutralized formula-leading imported values in CSV exports.
 - Matched checksum entries to published asset names and excluded the checksum manifest from hashing itself.
+- Enabled repository secret scanning, push protection, private vulnerability reporting, and protected linear updates to `main`.
 - Pinned GitHub Actions to full commit SHAs and disabled persisted checkout credentials.
 
 ## [2.1.0] - 2026-08-23

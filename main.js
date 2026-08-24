@@ -1,4 +1,4 @@
-import { app, BrowserWindow, Menu, session } from 'electron';
+import { app, BrowserWindow, Menu, screen, session } from 'electron';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createStore } from './src/main/store.js';
@@ -16,9 +16,13 @@ function focusMainWindow() {
 }
 
 function createWindow() {
+    const { width: workWidth, height: workHeight } = screen.getPrimaryDisplay().workAreaSize;
+    const windowWidth = Math.min(1240, Math.max(920, workWidth - 64));
+    const windowHeight = Math.min(840, Math.max(600, workHeight - 64));
+
     const win = new BrowserWindow({
-        width: 1240,
-        height: 840,
+        width: windowWidth,
+        height: windowHeight,
         minWidth: 920,
         minHeight: 600,
         backgroundColor: '#0b0b0f',

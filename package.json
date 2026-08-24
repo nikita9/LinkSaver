@@ -18,6 +18,7 @@
     "build:linux": "electron-builder --linux --publish=never",
     "build:release:mac": "electron-builder --mac --publish=never --config.forceCodeSigning=true --config.mac.notarize=true --config.mac.hardenedRuntime=true",
     "build:release:win": "electron-builder --win --publish=never --config.forceCodeSigning=true",
+    "screenshots": "electron scripts/capture-screenshots.mjs",
     "postinstall": "electron-builder install-app-deps",
     "clean": "node scripts/clean.mjs"
   },
