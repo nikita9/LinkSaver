@@ -2,6 +2,18 @@
 
 All notable changes to Link Saver are documented here.
 
+## [Unreleased]
+
+### Added
+
+- Public contribution, conduct, issue-reporting, pull-request, and release-maintainer documentation.
+- Fail-closed macOS notarization and Windows Authenticode requirements with post-build signature verification.
+
+### Security
+
+- Neutralized formula-leading imported values in CSV exports.
+- Pinned GitHub Actions to full commit SHAs and disabled persisted checkout credentials.
+
 ## [2.1.0] - 2026-08-23
 
 ### Added

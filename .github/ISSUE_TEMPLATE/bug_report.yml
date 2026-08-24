@@ -1,0 +1,47 @@
+name: Bug report
+description: Report a reproducible problem in Link Saver
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: Do not report vulnerabilities here. Use the private security advisory link in the issue chooser.
+  - type: input
+    id: version
+    attributes:
+      label: Link Saver version
+      placeholder: v2.1.0
+    validations:
+      required: true
+  - type: dropdown
+    id: operating-system
+    attributes:
+      label: Operating system
+      options:
+        - macOS (Apple silicon)
+        - macOS (Intel)
+        - Windows
+        - Linux
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Remove private URLs, bookmark names, credentials, and other personal data.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior and logs
+      description: Redact local paths and personal bookmark data before posting.
+    validations:
+      required: true

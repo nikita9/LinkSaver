@@ -2,7 +2,14 @@
 
 A fast, minimal desktop app for saving, organizing, and managing bookmarks — with smart tag suggestions based on domain, TLD, and URL-path analysis. Built with Electron.
 
+[![CI](https://github.com/nikita9/LinkSaver/actions/workflows/ci.yml/badge.svg)](https://github.com/nikita9/LinkSaver/actions/workflows/ci.yml)
+[![Release](https://github.com/nikita9/LinkSaver/actions/workflows/release.yml/badge.svg)](https://github.com/nikita9/LinkSaver/actions/workflows/release.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
 [Download the latest release](https://github.com/nikita9/LinkSaver/releases/latest)
+
+> [!WARNING]
+> The v2.1.0 macOS and Windows packages were published before trusted code-signing was enforced. macOS may report the app as damaged, and Windows may show an unknown-publisher warning. Do not bypass operating-system security checks. Build from source or wait for the next signed release.
 
 ## Features
 
@@ -44,6 +51,8 @@ npm run check
 npm start
 ```
 
+See [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request.
+
 ## Building
 
 ```bash
@@ -59,7 +68,9 @@ Installers are written to `dist/`.
 
 ## Releases
 
-CI runs linting, unit tests, a production dependency audit, and a packaging smoke test for every pull request and push to `main`. Tags matching the package version (for example, `v2.1.0`) build on native macOS, Windows, and Linux runners. The release workflow publishes the installers and a `SHA256SUMS` file to GitHub Releases.
+CI runs linting, unit tests, a production dependency audit, and a packaging smoke test for every pull request and push to `main`. Tags matching the package version build on native macOS, Windows, and Linux runners. Stable releases fail closed unless macOS Developer ID/notarization credentials and Windows Authenticode credentials are configured. The workflow verifies signatures before publishing installers and `SHA256SUMS`.
+
+Maintainers should follow [docs/RELEASING.md](docs/RELEASING.md).
 
 ## Data location
 
@@ -71,4 +82,9 @@ Links are stored in the Electron user-data directory (`links.db`):
 
 ## License
 
-MIT
+[MIT](LICENSE)
+
+## Contributing and security
+
+- Contributions are welcome under [CONTRIBUTING.md](CONTRIBUTING.md) and the [Code of Conduct](CODE_OF_CONDUCT.md).
+- Report vulnerabilities privately according to [SECURITY.md](SECURITY.md). Do not open public security issues.

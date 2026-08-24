@@ -1,5 +1,6 @@
 import { ipcMain, dialog, shell } from 'electron';
 import { promises as fs } from 'node:fs';
+import { serializeLinksCsv } from './csv.js';
 import { analyzeUrl } from './tagger.js';
 import { MAX_BATCH_SIZE, normalizeUrl, prepareBatch, prepareLink } from './link-service.js';
 
@@ -11,10 +12,6 @@ const RENDERER_URL = new URL('../../index.html', import.meta.url).href;
 async function saveBatch(store, links) {
     if (links.length === 0) return { inserted: 0, duplicates: 0 };
     return store.addMany(links);
-}
-
-function csvField(value) {
-    return `"${String(value ?? '').replace(/"/g, '""')}"`;
 }
 
 function handle(channel, fn) {
@@ -105,13 +102,7 @@ export function registerIpc(store) {
 
         const links = await store.all();
         if (filePath.endsWith('.csv')) {
-            const rows = links.map((link) => [
-                csvField(link.url),
-                csvField(link.name),
-                csvField((link.tags || []).join(';')),
-                csvField(link.added)
-            ].join(','));
-            await fs.writeFile(filePath, ['URL,Name,Tags,Date Added', ...rows].join('\n'), 'utf8');
+            await fs.writeFile(filePath, serializeLinksCsv(links), 'utf8');
         } else {
             await fs.writeFile(filePath, JSON.stringify(links, null, 2), 'utf8');
         }
