@@ -6,7 +6,7 @@ A fast, minimal desktop app for saving, organizing, and managing bookmarks — w
 [![Release](https://github.com/nikita9/LinkSaver/actions/workflows/release.yml/badge.svg)](https://github.com/nikita9/LinkSaver/actions/workflows/release.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-[Download the latest release](https://github.com/nikita9/LinkSaver/releases/latest)
+[Download the latest release](https://github.com/nikita9/LinkSaver/releases/latest) · [Read the Wiki](https://github.com/nikita9/LinkSaver/wiki)
 
 > [!WARNING]
 > The v2.1.0 macOS and Windows packages were published before trusted code-signing was enforced. Verify `SHA256SUMS` before opening them, and use only the documented per-app operating-system exception. Never disable Gatekeeper or SmartScreen globally.

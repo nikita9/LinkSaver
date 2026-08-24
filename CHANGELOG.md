@@ -7,6 +7,7 @@ All notable changes to Link Saver are documented here.
 ### Added
 
 - Public contribution, conduct, issue-reporting, pull-request, and release-maintainer documentation.
+- Public GitHub Wiki covering installation, source builds, troubleshooting, privacy, and contribution guidance.
 - User installation instructions for release selection, checksum verification, operating-system warnings, and local source builds.
 - Fail-closed macOS notarization and Windows Authenticode requirements with post-build signature verification.
 
