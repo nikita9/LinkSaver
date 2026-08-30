@@ -47,9 +47,9 @@
     "better-sqlite3": "^13.0.3"
   },
   "devDependencies": {
-    "electron": "^43.4.1",
+    "electron": "^44.0.0",
     "electron-builder": "^26.15.3",
-    "eslint": "^10.9.0"
+    "eslint": "^10.9.1"
   },
   "build": {
     "appId": "com.linksaver.app",
