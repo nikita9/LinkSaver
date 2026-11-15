@@ -44,12 +44,12 @@
     "npm": ">=10"
   },
   "dependencies": {
-    "better-sqlite3": "^13.0.3"
+    "better-sqlite3": "^13.1.1"
   },
   "devDependencies": {
-    "electron": "^43.4.1",
-    "electron-builder": "^26.15.3",
-    "eslint": "^10.9.0"
+    "electron": "^45.3.1",
+    "electron-builder": "^26.18.0",
+    "eslint": "^10.14.0"
   },
   "build": {
     "appId": "com.linksaver.app",
